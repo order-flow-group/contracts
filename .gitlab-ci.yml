@@ -1,0 +1,11 @@
+include:
+  - project: order-flow-group/platform/ci-templates
+    ref: main
+    file:
+      - templates/base.yml
+      - templates/secret-scan.yml
+      - templates/spec-lint.yml
+
+variables:
+  SPEC_OPENAPI_GLOB: "openapi/*.yaml"
+  SPEC_ASYNCAPI_GLOB: "asyncapi/*.yaml"

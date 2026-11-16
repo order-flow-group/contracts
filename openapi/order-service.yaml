@@ -1,0 +1,112 @@
+openapi: 3.1.0
+info:
+  title: OrderFlow order-service
+  version: 0.1.0
+  description: |
+    order-service'in HTTP sözleşmesi. Faz 0'da sadece health ve metrik uç noktaları var;
+    sipariş endpoint'leri Faz 1'de eklenir.
+  license:
+    name: Apache-2.0
+    identifier: Apache-2.0
+  contact:
+    name: OrderFlow
+    url: https://gitlab.com/order-flow-group/platform/contracts
+servers:
+  - url: http://localhost:8080
+    description: Lokal geliştirme
+tags:
+  - name: health
+    description: Süreç ve bağımlılık sağlığı (Kubernetes probe'ları için)
+  - name: observability
+    description: Prometheus metrikleri
+paths:
+  /health/live:
+    get:
+      operationId: getLiveness
+      summary: Süreç ayakta mı
+      description: |
+        Sadece sürecin cevap verdiğini söyler; hiçbir bağımlılığı kontrol etmez.
+        Başarısız olursa orkestratör container'ı yeniden başlatır.
+      tags: [health]
+      security: []
+      responses:
+        "200":
+          description: Süreç ayakta
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+              example:
+                status: up
+  /health/ready:
+    get:
+      operationId: getReadiness
+      summary: Trafik almaya hazır mı
+      description: |
+        Servisin kendi bağımlılıklarını (kendi DB'si, broker) kontrol eder; başka servisleri
+        kontrol etmez. Başarısız olursa servis trafikten çıkarılır ama yeniden başlatılmaz.
+      tags: [health]
+      security: []
+      responses:
+        "200":
+          description: Bütün bağımlılıklar hazır
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadinessStatus"
+              example:
+                status: up
+                checks:
+                  database: up
+        "503":
+          description: En az bir bağımlılık hazır değil
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadinessStatus"
+              example:
+                status: down
+                checks:
+                  database: down
+  /metrics:
+    get:
+      operationId: getMetrics
+      summary: Prometheus metrikleri
+      description: |
+        Prometheus'un scrape ettiği metrikler. Kimlik doğrulama yok; dışarıya açılmaz,
+        sadece iç ağdan erişilir.
+      tags: [observability]
+      security: []
+      responses:
+        "200":
+          description: Prometheus text exposition formatında metrikler
+          content:
+            text/plain:
+              schema:
+                type: string
+              example: |
+                # HELP http_requests_total Toplam HTTP istek sayısı
+                # TYPE http_requests_total counter
+                http_requests_total{method="GET",path="/health/live",status="200"} 1
+components:
+  schemas:
+    Status:
+      type: string
+      enum: [up, down]
+    HealthStatus:
+      type: object
+      required: [status]
+      properties:
+        status:
+          $ref: "#/components/schemas/Status"
+    ReadinessStatus:
+      type: object
+      required: [status, checks]
+      properties:
+        status:
+          $ref: "#/components/schemas/Status"
+        checks:
+          type: object
+          description: Bağımlılık adı → durumu (ör. `database`, `broker`)
+          additionalProperties:
+            $ref: "#/components/schemas/Status"

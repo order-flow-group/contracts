@@ -1,0 +1,10 @@
+# Spectral kural seti: OpenAPI ve AsyncAPI dosyalarını tek araçla lint'ler.
+# Hazır kural setlerinden başlıyoruz; OrderFlow'a özel kurallar ihtiyaç doğdukça eklenir.
+extends:
+  - spectral:oas
+  - spectral:asyncapi
+rules:
+  # Her operasyonun bir operationId'si olsun: kod üretimi (oapi-codegen) buna dayanıyor.
+  operation-operationId: error
+  # Her operasyon bir tag'e bağlı olsun: üretilen dokümanda gruplama için.
+  operation-tags: error

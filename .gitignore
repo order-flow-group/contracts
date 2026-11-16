@@ -1,0 +1,17 @@
+# Ortam ve secret
+.env
+.env.local
+.env.*.local
+
+# Claude Code kişisel ayarları
+.claude/settings.local.json
+
+# Node (npx ile araç çalıştırılırsa)
+node_modules/
+
+# Editör ve işletim sistemi
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
